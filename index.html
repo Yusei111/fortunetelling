@@ -12,10 +12,8 @@
             color: #f8fafc;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            /* Fallback for older browsers */
-            height: 100dvh;
-            /* スマホのブラウザバー対策 */
+            height: 100vh; /* Fallback for older browsers */
+            height: 100dvh; /* スマホのブラウザバー対策 */
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -155,8 +153,7 @@
             overflow: auto;
             position: relative;
             padding: 20px;
-            -webkit-overflow-scrolling: touch;
-            /* スマホの慣性スクロール */
+            -webkit-overflow-scrolling: touch; /* スマホの慣性スクロール */
         }
 
         .zoom-container {
@@ -334,17 +331,14 @@
             .header-area {
                 padding: 10px;
             }
-
             .header-top {
                 flex-direction: column;
                 gap: 10px;
                 text-align: center;
             }
-
             h1 {
                 font-size: 1.2em;
             }
-
             .toggle-btn {
                 position: relative;
                 right: auto;
@@ -352,61 +346,61 @@
                 max-width: 250px;
                 padding: 10px;
             }
-
             .control-panel {
                 max-height: 350px;
             }
-
-            .fortune-controls,
-            .controls {
+            .fortune-controls, .controls {
                 padding: 10px;
                 gap: 8px;
                 border-radius: 15px;
                 width: 100%;
                 box-sizing: border-box;
             }
-
             .controls span {
                 width: 100%;
                 display: block;
                 text-align: center;
                 margin-bottom: 5px;
             }
-
-            .controls button,
-            .fortune-controls button {
+            .controls button, .fortune-controls button {
                 flex: 1 1 calc(50% - 10px);
                 font-size: 0.85em;
-                padding: 12px 5px;
-                /* スマホで押しやすい高さ */
+                padding: 12px 5px; /* スマホで押しやすい高さ */
             }
-
             .viewport {
                 padding: 10px;
             }
-
             td {
                 min-width: 140px;
                 width: 140px;
                 padding: 10px;
                 font-size: 0.85em;
             }
-
             th {
                 font-size: 0.95em;
                 padding: 10px;
             }
-
-            th.row-header,
-            th.top-left {
+            
+            /* --- 追加修正：スマホ版の左端固定を解除 --- */
+            th.row-header {
+                position: relative; /* stickyを解除して一緒にスクロールさせる */
+                left: auto;
                 min-width: 100px;
                 font-size: 0.85em;
+                box-shadow: none; /* 固定用の横の影を消す */
             }
+            th.top-left {
+                left: auto; /* 左固定のみ解除 */
+                min-width: 100px;
+                font-size: 0.85em;
+                z-index: 10; /* 他の上部ヘッダーと同じ高さに揃える */
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* 上固定用の影だけ残す */
+            }
+            /* ------------------------------------------ */
 
             .keyword {
                 font-size: 1em;
             }
-
             .planet-desc {
                 font-size: 0.7em;
             }
