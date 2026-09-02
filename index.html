@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10天体 × 12星座 占いブース専用ダッシュボード</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .header-area {
+            padding: 15px 20px;
+            background: #0f081c;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            position: relative;
+        }
+
+        h1 {
+            color: #fbbf24;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+            font-size: 1.5em;
+            margin: 0;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            position: absolute;
+            right: 10px;
+        }
+
+        .toggle-btn:hover {
+            background: #334155;
+            color: #f8fafc;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+            max-height: 150px;
+            opacity: 1;
+            margin-top: 15px;
+        }
+
+        .control-panel.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+            pointer-events: none;
+        }
+
+        .fortune-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: #1e293b;
+            padding: 10px 25px;
+            border-radius: 30px;
+            border: 2px solid #fbbf24;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .fortune-controls button {
+            background: linear-gradient(45deg, #475569, #64748b);
+            color: white;
+            border: 1px solid #94a3b8;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .fortune-controls button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(45deg, #64748b, #94a3b8);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: #1e293b;
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 1px solid #334155;
+        }
+
+        .controls button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        .controls button:hover {
+            background: #6366f1;
+        }
+
+        .controls span {
+            font-size: 0.9em;
+            color: #cbd5e1;
+        }
+
+        .viewport {
+            flex-grow: 1;
+            overflow: auto;
+            position: relative;
+            padding: 20px;
+        }
+
+        .zoom-container {
+            transform-origin: top left;
+            transition: transform 0.2s ease-out;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #1e293b;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid #334155;
+            transition: opacity 0.3s;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #334155;
+            border-right: 1px solid #334155;
+            padding: 15px;
+            vertical-align: top;
+            transition: all 0.3s ease;
+        }
+
+        th {
+            background-color: #0f081c;
+            color: #a78bfa;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 1.1em;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        th.row-header {
+            background-color: #0f081c;
+            color: #fbbf24;
+            position: sticky;
+            left: 0;
+            z-index: 11;
+            text-align: left;
+            min-width: 140px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        th.top-left {
+            z-index: 12;
+            left: 0;
+            top: 0;
+            min-width: 140px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        td {
+            width: 220px;
+            min-width: 220px;
+            font-size: 0.9em;
+            color: #e2e8f0;
+            background-color: #1e293b;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        td:last-child,
+        th:last-child {
+            border-right: none;
+        }
+
+        tr:last-child td,
+        tr:last-child th.row-header {
+            border-bottom: none;
+        }
+
+        .fortune-active td,
+        .fortune-active th {
+            opacity: 0.2;
+            filter: grayscale(80%);
+        }
+
+        .fortune-active th.highlight-col,
+        .fortune-active th.highlight-row {
+            opacity: 1.0;
+            filter: grayscale(0%);
+            background-color: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            td:hover:not(.active-cell) {
+                background-color: #2dd4bf !important;
+                opacity: 0.8 !important;
+            }
+        }
+
+        td.active-cell.good-star {
+            opacity: 1.0 !important;
+            filter: grayscale(0%) !important;
+            background-color: rgba(52, 211, 153, 0.15) !important;
+            border: 2px solid #34d399 !important;
+            box-shadow: 0 0 25px rgba(52, 211, 153, 0.5) inset, 0 0 10px rgba(52, 211, 153, 0.5) !important;
+            transform: scale(1.03);
+            z-index: 5;
+            position: relative;
+        }
+
+        td.active-cell.bad-star {
+            opacity: 1.0 !important;
+            filter: grayscale(0%) !important;
+            background-color: rgba(244, 63, 94, 0.15) !important;
+            border: 2px solid #f43f5e !important;
+            box-shadow: 0 0 25px rgba(244, 63, 94, 0.5) inset, 0 0 10px rgba(244, 63, 94, 0.5) !important;
+            transform: scale(1.03);
+            z-index: 5;
+            position: relative;
+        }
+
+        .keyword {
+            font-weight: bold;
+            color: #fbbf24;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+            border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+            padding-bottom: 4px;
+            pointer-events: none;
+        }
+
+        .bad-star .keyword {
+            color: #f43f5e;
+            border-bottom: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        .good-star .keyword {
+            color: #34d399;
+            border-bottom: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .planet-desc {
+            font-size: 0.75em;
+            color: #94a3b8;
+            display: block;
+            margin-top: 5px;
+            font-weight: normal;
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 14px;
+            height: 14px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 7px;
+            border: 3px solid #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-area">
+        <div class="header-top">
+            <h1>10天体 × 12星座 占いダッシュボード</h1>
+            <button id="toggle-btn" class="toggle-btn" onclick="toggleControls()">▲ 閉じる</button>
+        </div>
+
+        <div id="control-panel" class="control-panel">
+            <div class="fortune-controls">
+                <button onclick="resetFortune()">🔄 すべてリセット</button>
+            </div>
+            <div class="controls">
+                <span>倍率: <span id="zoom-level">100%</span></span>
+                <button onclick="zoomOut()">- 縮小</button>
+                <button onclick="zoomIn()">+ 拡大</button>
+                <button onclick="resetZoom()">100%</button>
+                <button onclick="fitToScreen()" style="background:#059669;">全体表示 (Fit)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="viewport" id="viewport">
+        <div class="zoom-container" id="zoom-container">
+            <table id="matrix-table">
+                <thead>
+                    <tr>
+                        <th class="top-left">天体 \ 星座</th>
+                        <th>♈ 牡羊座<br><span style="font-size:0.7em;color:#f87171;">(火)</span></th>
+                        <th>♉ 牡牛座<br><span style="font-size:0.7em;color:#4ade80;">(地)</span></th>
+                        <th>♊ 双子座<br><span style="font-size:0.7em;color:#60a5fa;">(風)</span></th>
+                        <th>♋ 蟹座<br><span style="font-size:0.7em;color:#c084fc;">(水)</span></th>
+                        <th>♌ 獅子座<br><span style="font-size:0.7em;color:#f87171;">(火)</span></th>
+                        <th>♍ 乙女座<br><span style="font-size:0.7em;color:#4ade80;">(地)</span></th>
+                        <th>♎ 天秤座<br><span style="font-size:0.7em;color:#60a5fa;">(風)</span></th>
+                        <th>♏ 蠍座<br><span style="font-size:0.7em;color:#c084fc;">(水)</span></th>
+                        <th>♐ 射手座<br><span style="font-size:0.7em;color:#f87171;">(火)</span></th>
+                        <th>♑ 山羊座<br><span style="font-size:0.7em;color:#4ade80;">(地)</span></th>
+                        <th>♒ 水瓶座<br><span style="font-size:0.7em;color:#60a5fa;">(風)</span></th>
+                        <th>♓ 魚座<br><span style="font-size:0.7em;color:#c084fc;">(水)</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th class='row-header'>☉ 太陽<span class='planet-desc'>性格・人生観</span></th>
+                        <td><span class='keyword'>直感、スピード</span>本能のままに動く純粋なエネルギーを持つ。新しいことにすぐ挑戦。</td>
+                        <td><span class='keyword'>マイペース</span>直観だよりの努力家。美しいものを愛する。</td>
+                        <td><span class='keyword'>流行に敏感</span>好奇心旺盛。コミュニケーション力抜群。流行に目がない</td>
+                        <td><span class='keyword'>シンパシー愛好家</span>優しさでみんなを包み込む愛情の持ち主。大切な人の笑顔を見ることが幸せ。</td>
+                        <td><span class='keyword'>自信家</span>ドラマチックなリーダーシップ。自分の人生はど派手派手です。</td>
+                        <td><span class='keyword'>ちりつも（塵も積もれば山となる）タイプ</span>夢と現実を両立する完璧で究極のプランナー。</td>
+                        <td><span class='keyword'>美意識あふれる人間</span>華やかさと公正さを併せ持ちます。クラスのムードメーカー。</td>
+                        <td><span class='keyword'>強メンタル</span>情熱を秘めたミステリアスな探求者。ひとつのことを愛し続ける一途なタイプ。</td>
+                        <td><span class='keyword'>挑戦家</span>自由を求めて進む情熱の冒険者。未知の世界に飛び込む。</td>
+                        <td><span class='keyword'>努力家</span>努力を積み重ねる堅実な実力者。何をされてもひるまない強靭なメンタルを持っています。</td>
+                        <td><span class='keyword'>自由な発想</span>自由と理性を兼ね備えた革命家。常識に縛られない。</td>
+                        <td><span class='keyword'>豊かな感受性</span>優しさで世界を包みこむ。共感性は高いが自分を犠牲にしてしまうので注意。</td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>☽ 月<span class='planet-desc'>素の自分・奥底に潜む感情</span></th>
+                        <td><span class='keyword'>体を動かしてストレス発散</span>怒りやすく感情が爆発しやすい。スポーツや散歩で気持ちを落ち着かせる。</td>
+                        <td><span class='keyword'>五感を満たして落ち着くタイプ</span>頑固になりやすいので美味しいものや良い香りで五感を満たしてリラックス。</td>
+                        <td><span class='keyword'>友達と話して気分転換</span>感情がコロコロ変わりやすい。友人とおしゃべりやSNSで悩みを解消。</td>
+                        <td><span class='keyword'>年上に人に甘えるタイプ</span>不安や恐れを抱えやすい。信頼できる人に温かく寄り添ってもらうことが多い。</td>
+                        <td><span class='keyword'>自分の趣味をひからかす</span>感情が態度に出やすい。同じ趣味を持つ人とおしゃべりをして、ストレスを思い切り発散する。</td>
+                        <td><span class='keyword'>整理整頓が好き</span>感情的になるとき、身の回りの掃除や片付けで心を落ち着かせることが多い。</td>
+                        <td><span class='keyword'>美的センスの塊</span>芸術や音楽などで心をを満たすことができる。</td>
+                        <td><span class='keyword'>一人の時間が好き</span>感情の振れ幅が大きい。一人で静かに過ごし、心と深く向き合うことがある。</td>
+                        <td><span class='keyword'>視野が広く、賢い</span>感情が高ぶりやすいので新しい場所へ行き、ワクワクする体験をしがち。</td>
+                        <td><span class='keyword'>目標までの距離の把握が得意</span>責任感から課題を一人で抱え込む。やるべきことを整理し、一歩小さな達成感を得ることで成長する。
+                        </td>
+                        <td><span class='keyword'>新しい刺激に敏感</span>他人に理解されないと感情的になる。しばしば読書やネットで新たな視点を取り入れる。</td>
+                        <td><span class='keyword'>音楽や芸術が趣味</span>感受性が強く揺さぶられやすい性格。よく音楽を聴いて涙を流している</td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>☿ 水星<span class='planet-desc'>知性・コミュニケーション</span></th>
+                        <td><span class='keyword'>直感ひらめき型</span>スピード勝負において強いの実行力を持つ。行動してから学ぶことが得意。</td>
+                        <td><span class='keyword'>コツコツ積み上げ型</span>考えるより感じる。じっくり時間をかけて物事を吸収する粘り強さを持つ。</td>
+                        <td><span class='keyword'>情報収集名人</span>言葉を自在に操る知性をもつ。好奇心旺盛で幅広いテーマを同時に学ぶことができる。</td>
+                        <td><span class='keyword'>感情共感型</span>心でつながる学び方はお手の物。身近な人に勉強を教えることで知識が定着しやすい。</td>
+                        <td><span class='keyword'>自己表現型</span>ドラマチックに人に伝える才能あり。人前で話す経験を通じて理解が深まる。</td>
+                        <td><span class='keyword'>分析力抜群</span>整理整頓が得意。細部まで理解できる力があり体系立ててまとめるのが得意。</td>
+                        <td><span class='keyword'>feeling型</span>対話で知性が磨かれ、グループでの学びで理解が進みやすい。</td>
+                        <td><span class='keyword'>洞察力が鋭い</span>物事の本質を見抜き、興味のある分野には徹底的にのめり込み深く学ぶタイプ。</td>
+                        <td><span class='keyword'>冒険家</span>広い視野を持ち、吸収が早い。海外・哲学・宗教などスケールの大きな知識を学ぶのに適している。</td>
+                        <td><span class='keyword'>効率厨</span>他人に役立って初めて生きる知性をもつ。堅実に積み重ねる力が武器。とにかく使えるかどうかを重視する。</td>
+                        <td><span class='keyword'>アインシュタインレベルの頭脳</span>未来を見通すことができる。独創的な発想が世間に大きく評価される</td>
+                        <td><span
+                                class='keyword'>イメージ豊か天才タイプ</span>何もかもfeeling(直観)で分かってしまう。言葉にしにくいニュアンスや感覚をつかんで言語化することが得意。
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>♀ 金星<span class='planet-desc'>恋愛</span></th>
+                        <td><span class='keyword'>一直線に情熱を注ぐ一途な恋愛をする</span>スリルと挑戦にときめく。直感で動くタイプで、ストレートな想いが魅力。</td>
+                        <td><span class='keyword'>母性溢れる愛に溺れる</span>上質で安心できる心地よさにときめく。五感で愛を感じたい人。お母さんが大好き</td>
+                        <td><span class='keyword'>恋愛はおしゃべり重視</span>「今」を感じる情報交換にときめく。恋のきっかけは会話から。軽やかな愛に気を付ける。</td>
+                        <td><span class='keyword'>包み込みたい、守りたい愛に弱い</span>ぬくもりある優しさにときめく。家族のようにお世話をすることに喜びを感じる。</td>
+                        <td><span class='keyword'>ドラマチックに盛り上がる愛が好き</span>クラスのの人気者にときめく。恋をすることで自分の魅力が輝くタイプ。派手な愛情表現が得意。
+                        </td>
+                        <td><span class='keyword'>誠実に尽くす健気な愛にあこがれる</span>好きな人の小さな気配りにときめく。慎重派で、真面目に愛を育てたいタイプ。</td>
+                        <td><span class='keyword'>バランス重視で華やかな愛を夢見る</span>美人にみとれる。センス抜群で、恋も上品に楽しみたいタイプ。</td>
+                        <td><span class='keyword'>一途に深くのめり込む恋愛が好き</span>心の交流にときめき、一途で深い愛を注ぐ。永遠の愛を誓うタイプ。</td>
+                        <td><span class='keyword'>自由で冒険心あふれる恋をする</span>恋に自由と冒険をし。常に新しい刺激を求める性格</td>
+                        <td><span class='keyword'>未来を見据える堅実タイプ</span>堅実に努力をして、好きな人からの信頼を勝ち取る。真面目で慎重、計画的な愛を育むことが多い。</td>
+                        <td><span class='keyword'>恋は友達から始まる人</span>個性的でユニークな出会いにときめく。恋にもマイルールを持ち、自我が強いタイプ。</td>
+                        <td><span class='keyword'>夢のようにロマンチックな恋をしたい</span>夢心地になる優しさにときめく。優しくて共感力たっぷりな癒やしの愛を享受したいと感じる。
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>♂ 火星<span class='planet-desc'>行動力・やる気・怒り</span></th>
+                        <td><span
+                                class='keyword'>スピード感で一気に突き進む能力がある</span>競争やスピード感があなたのやる気スイッチをONする。感情をストレートに爆発させ友達を傷つけることがある。
+                        </td>
+                        <td><span class='keyword'>最後までやり抜くNever
+                                Giver</span>安心できる環境が整うと実力が完全発揮。しかし不満を溜め込みすぎると、噴火する。周囲の人も注意</td>
+                        <td><span class='keyword'>落ち着きがない天才型</span>新しい情報や刺激でやる気アップ。言葉で鋭く反撃するタイプ。趣味は論破すること。法学部向いてます。</td>
+                        <td><span class='keyword'>誰かを守るためなら犠牲はいとわない人</span>大切な人のためだと死ぬほど頑張れる。守るために感情的に怒ってしまうので抑え込むべし。
+                        </td>
+                        <td><span class='keyword'>みんなの中心リーダー</span>人から注目されると火がつく。プライドを傷つけられると強く出てしまうので注意。</td>
+                        <td><span class='keyword'>石橋をたたいて渡る堅実家</span>必要とされる場面で力を出す。細かいことを指摘して怒る。やめたほうがいい。</td>
+                        <td><span class='keyword'>なんでも人を巻き込むリーダー</span>人との協力や調和がスイッチに。一見冷静だが内心で不満が募ると抑え込めずに爆破する。</td>
+                        <td><span class='keyword'>粘り強くひとつのことをやり遂げるタイプ</span>好きなことにのめり込むと加速。ただし、自分の世界に邪魔が入ると根に持ち、静かに怒る。
+                        </td>
+                        <td><span class='keyword'>大胆なチャレンジ屋さん</span>自由や冒険心が刺激され挑戦をやめない。カッとなると絶対に引き下がらず抵抗する。</td>
+                        <td><span class='keyword'>綿密プランナー</span>目標や責任感がやる気の源。冷静に怒りを表現し相手を追い詰める。言っていることは正しい</td>
+                        <td><span class='keyword'>時代の開拓者</span>他人と違うことをするときに火が付く。起こっているときは理詰めしてくるので怖い。</td>
+                        <td><span class='keyword'>流行サーファー</span>誰かの役に立っている実感が原動力。泣きながら感情をぶつける厄介なタイプ。</td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>♃ 木星<span class='planet-desc'>運勢</span></th>
+                        <td><span class='keyword'>ピンときたら即アクションする人</span>行動力を磨いてチャンスをつかむ。そのチャンスが幸運を引き寄せる。</td>
+                        <td><span class='keyword'>心地よさを糧にする人</span>自分のセンスを信じれば運気がやってくる。よろこびに裏に隠れた豊かさに気づくことが大事。</td>
+                        <td><span class='keyword'>コミュニケーションが得意な人</span>情報と交流で自分の世界を広げる。知的好奇心が幸運を導くチャンスになる。</td>
+                        <td><span class='keyword'>大切な人との時間が幸運の源になる</span>本当に安心できるコミュニティを作る。心のつながりが幸運を引き寄せる。幸せをかみしめよう
+                        </td>
+                        <td><span class='keyword'>自分らしく輝くスター</span>堂々と自分を表現する。自己表現が自分の輝きを広げる場所であり、同時に幸運を引き寄せる。</td>
+                        <td><span class='keyword'>流れをかえる開拓者</span>分析力で新たな道を開く。小さな工夫が大きな幸運を呼び寄せる。</td>
+                        <td><span class='keyword'>心地よい場所で本領発揮する人</span>人との協調でチャンスを広げる。そこから広がる幸運から目を離してはいけない。</td>
+                        <td><span class='keyword'>好きなことに本気で向き合う人</span>情熱を注げるものを極める。深い情熱が引き出す可能性を信じれば運がよくなる。</td>
+                        <td><span class='keyword'>とにかくワクワクしたい人</span>自由な冒険で成長するタイプ。自由が運を切り開く扉。</td>
+                        <td><span class='keyword'>コツコツ努力する人</span>夢をポジティブに考え確実に前進する。努力の積み重ねは大きな幸運を呼ぶ。</td>
+                        <td><span class='keyword'>自由な発想で新しい風を起こす人</span>自由な発想で未来を切り開く。新しい発想が未来を開き、他人を幸せにする。</td>
+                        <td><span class='keyword'>感受性と直感で生きる人</span>自分のインスピレーションを信じて流れに乗る。夢見る心が運を引き寄せる力。</td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>♄ 土星<span class='planet-desc'>試練・課題・責任</span></th>
+                        <td><span class='keyword'>結果を急ぎすぎて、自分にプレッシャー</span>誰にでもいい顔をしようとして疲れる。考えて動く力を身につける。</td>
+                        <td><span class='keyword'>変化を恐れて同じ場所にとどまる</span>信じるほどに、信頼関係がプレッシャーに。変化を受け入れたとき、新しい豊かさが広がる。</td>
+                        <td><span class='keyword'>言葉や情報の選び方に自信をなくす</span>理想が高く、現実とのギャップに落ち込む。言葉に責任を持つことで、信頼される存在に。</td>
+                        <td><span class='keyword'>家族や仲間を守らなきゃと背負い込む</span>責任感が強く、休むことに罪悪感を持つ。自立を学ぶことで、人との絆がより深まる。</td>
+                        <td><span class='keyword'>期待に応えようと、気づかぬうちに無理</span>理解されにくい考え方に孤独を感じる。評価を手放せば、自分らしい輝きが戻る。</td>
+                        <td><span class='keyword'>小さなミスも許せず、自分を責めてしまう</span>人の感情を受け止めすぎて、心が重くなる。完璧を手放すことで、心にゆとりが生まれる。
+                        </td>
+                        <td><span class='keyword'>人に合わせず、自分の軸で調和を作る</span>全員に平等であろうとするとき。行動力が信頼に変わる。</td>
+                        <td><span class='keyword'>手放すことで、しなやかな強さを得る</span>秘密や信頼を守ろうと抱え込みすぎるとき。不動の安心と豊かさ。</td>
+                        <td><span class='keyword'>理想を現実に変える力を磨く</span>大きな理想に責任を負わうとするとき。知識が知恵となり、人を導く力に。</td>
+                        <td><span class='keyword'>頑張りすぎず、信頼を築く生き方を学ぶ</span>「自分しかやれない」と感じるとき。愛される居場所と絆。</td>
+                        <td><span class='keyword'>孤独を恐れず、自分の信念を貫く</span>未来を背負わされていると感じるとき。本物のリーダーシップ。</td>
+                        <td><span class='keyword'>優しさと現実のバランスを取ることを学ぶ</span>人の痛みを自分の責任と感じるとき。人の役に立てる誠実さ。</td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>♅ 天王星<span class='planet-desc'>革命・目覚め (世代)</span></th>
+                        <td><span class='keyword'>自分の直感を信じて、世界を切り開く革命</span>ゼロからでも燃える「新しい冒険者」。人間関係のルールを塗り替える目覚め。</td>
+                        <td><span class='keyword'>手放しの先に訪れる、価値観の目覚め</span>何度でも立ち上がる「粘り強い職人」。心の奥で起きる「再生の革命」。</td>
+                        <td><span class='keyword'>ひらめきが導く、思考の自由革命</span>学びを自在に結ぶ「情報の旅人」。未知の扉を開く「冒険者の目覚め」。</td>
+                        <td><span class='keyword'>守る愛から、解き放つ愛への目覚め</span>家族や仲間を照らす「守り人」。古いルールを超えて、真のリーダーへ。</td>
+                        <td><span class='keyword'>あなたの中の“創造者”が目を覚ます</span>舞台を取り戻す「人生の主演者」。眠っていた“未来創造力”が解放される。</td>
+                        <td><span class='keyword'>完璧主義を超えて、“流れに乗る力”が覚醒</span>混乱を整理する「癒やしの知恵者」。優しさが世界を変える“癒やしの革命”。</td>
+                        <td><span class='keyword'>人と人を結び直す「バランサー」</span>対等な関係性の大切さを教える目覚め。自由な関係を目指す。</td>
+                        <td><span class='keyword'>失った先で見つける「不死鳥の魂」</span>破壊の後に訪れる再生こそ、真の強さ。心の奥底から湧き上がる革命。</td>
+                        <td><span class='keyword'>境界を越える「自由な冒険者」</span>未知を恐れない心。古いルールを壊し新しい世界へ飛び立つ目覚め。</td>
+                        <td><span class='keyword'>試練を糧にする「不屈のリーダー」</span>責任を革新する力。時代に合う形へ整えるリーダーシップの目覚め。</td>
+                        <td><span class='keyword'>常識を超えて進む「革命の旗手」</span>世界を変えるひらめき。未来を照らす存在としての目覚め。</td>
+                        <td><span class='keyword'>優しさを広げる「癒やしの導き手」</span>痛みを癒やしの才能に変える。愛と共感で世界を変える革命。</td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>♆ 海王星<span class='planet-desc'>夢・直感・不安 (世代)</span></th>
+                        <td><span class='keyword'>人に合わせすぎて、自分の本音を見失う不安</span>心をクリアにするのは「美しいものに触れる時間」。</td>
+                        <td><span class='keyword'>信じすぎること、疑いすぎることへの恐れ</span>迷いをほどくのは「一人きりの内省と集中」。</td>
+                        <td><span class='keyword'>「自由でなければ価値がない」と思い込む不安</span>不安を乗り越えるのは「新しい学びや旅への挑戦」。</td>
+                        <td><span class='keyword'>失敗や弱さを見せることへの恐怖</span>心を整えるのは「地道な努力と小さな達成感」。</td>
+                        <td><span class='keyword'>人と違うことへの葛藤と孤独</span>モヤモヤを晴らすのは「仲間とつながる対話」。</td>
+                        <td><span class='keyword'>世界の痛みに共鳴しすぎて、心が疲れてしまう</span>感情の波を静める「優しい時間」が心を整える。</td>
+                        <td><span class='keyword'>他人の目を気にしすぎる</span>対人関係で自分を見失う恐れ。美しいものに囲まれて癒やされる。</td>
+                        <td><span class='keyword'>見えないものへの恐怖</span>疑心暗鬼に陥りやすい。一人で深く内省する時間が必要。</td>
+                        <td><span class='keyword'>束縛されることへの恐れ</span>自由を失う不安。新しい知識や異文化に触れて心を解放する。</td>
+                        <td><span class='keyword'>失敗への過度な恐れ</span>期待に応えられない不安。小さな成功体験を積み重ねて自信を取り戻す。</td>
+                        <td><span class='keyword'>孤立することへの恐れ</span>理解されない孤独感。仲間との対話で共感を得て安心する。</td>
+                        <td><span class='keyword'>自他の境界線が曖昧になる</span>他人の感情に飲み込まれる不安。音楽や芸術に浸り、自分だけの世界を持つ。</td>
+                    </tr>
+                    <tr>
+                        <th class='row-header'>♇ 冥王星<span class='planet-desc'>破壊と再生・変容 (世代)</span></th>
+                        <td><span class='keyword'>プライドが揺らぐとき、人生の再起が始まる</span>本気で輝きを取り戻そうとするとき、強さが目覚める。</td>
+                        <td><span class='keyword'>日常が崩れたときに、真の強さが目覚める</span>混乱を整理し直すとき、強さが目覚める。</td>
+                        <td><span class='keyword'>人との関係が壊れるとき、新しい絆が生まれる</span>人とのバランスを取り直すとき、強さが目覚める。</td>
+                        <td><span class='keyword'>心の底で一度壊れてこそ、真の再生が始まる</span>ゼロから再生するとき、強さが目覚める。</td>
+                        <td><span class='keyword'>信じていた「常識」が壊れるとき、自由が生まれる</span>未知の世界に飛び込むとき、強さが目覚める。</td>
+                        <td><span class='keyword'>社会のルールが変わるとき、新しい時代を築く力</span>責任を引き受けるとき、強さが目覚める。</td>
+                        <td><span class='keyword'>対人関係の崩壊と再生</span>パートナーシップの崩壊から、真に自立した関係を再構築する。</td>
+                        <td><span class='keyword'>深い絆の破壊と究極の再生</span>信じていたものが壊れた後、より強靭な魂として生まれ変わる。</td>
+                        <td><span class='keyword'>思想や信念の根底からの覆り</span>信じていた常識が崩れ去り、全く新しい自由な世界観を構築する。</td>
+                        <td><span class='keyword'>社会的地位の崩壊と真の実力</span>権威や体制の崩壊を経験し、自らの手で新たな秩序を作り上げる。</td>
+                        <td><span class='keyword'>既存のシステムの破壊</span>古いネットワークや常識を壊し、誰もが平等な新しい社会を創る。</td>
+                        <td><span class='keyword'>精神性の解体と究極の癒やし</span>見えない世界への恐れを越え、深い愛と癒やしで世界を包み込む。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function toggleControls() {
+            const panel = document.getElementById('control-panel');
+            const btn = document.getElementById('toggle-btn');
+            panel.classList.toggle('collapsed');
+            if (panel.classList.contains('collapsed')) {
+                btn.innerHTML = '▼ メニューを開く';
+            } else {
+                btn.innerHTML = '▲ 閉じる';
+            }
+            setTimeout(updateZoom, 350);
+        }
+
+        let currentZoom = 1.0;
+        const zoomStep = 0.1;
+        const zoomContainer = document.getElementById('zoom-container');
+        const zoomLevelText = document.getElementById('zoom-level');
+        const viewport = document.getElementById('viewport');
+        const matrixTable = document.getElementById('matrix-table');
+
+        function updateZoom() {
+            if (currentZoom < 0.2) currentZoom = 0.2;
+            if (currentZoom > 2.0) currentZoom = 2.0;
+            zoomContainer.style.transform = `scale(${currentZoom})`;
+            const rect = matrixTable.getBoundingClientRect();
+            zoomContainer.style.width = `${rect.width / currentZoom}px`;
+            zoomContainer.style.height = `${rect.height / currentZoom}px`;
+            zoomLevelText.innerText = Math.round(currentZoom * 100) + '%';
+        }
+
+        function zoomIn() { currentZoom += zoomStep; updateZoom(); }
+        function zoomOut() { currentZoom -= zoomStep; updateZoom(); }
+        function resetZoom() { currentZoom = 1.0; updateZoom(); }
+        function fitToScreen() {
+            const viewportWidth = viewport.clientWidth - 40;
+            const viewportHeight = viewport.clientHeight - 40;
+            zoomContainer.style.transform = 'scale(1.0)';
+            const tableWidth = matrixTable.offsetWidth;
+            const tableHeight = matrixTable.offsetHeight;
+            const scaleX = viewportWidth / tableWidth;
+            const scaleY = viewportHeight / tableHeight;
+            currentZoom = Math.min(scaleX, scaleY);
+            updateZoom();
+        }
+
+        updateZoom();
+
+        viewport.addEventListener('wheel', function (e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) zoomIn();
+                else zoomOut();
+            }
+        }, { passive: false });
+
+        const badPlanetRows = [4, 6, 8, 9]; // 火星, 土星, 海王星, 冥王星 (0-indexed based on data list)
+
+        document.querySelectorAll('tbody td').forEach(td => {
+            td.addEventListener('click', function () {
+                let tr = this.parentElement;
+                let rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
+
+                let isBad = badPlanetRows.includes(rowIndex);
+
+                if (this.classList.contains('active-cell')) {
+                    this.classList.remove('active-cell', 'good-star', 'bad-star');
+                } else {
+                    this.classList.add('active-cell');
+                    if (isBad) {
+                        this.classList.add('bad-star');
+                    } else {
+                        this.classList.add('good-star');
+                    }
+                }
+                updateHighlights();
+            });
+        });
+
+        function updateHighlights() {
+            let activeCells = document.querySelectorAll('.active-cell');
+
+            document.querySelectorAll('.highlight-col, .highlight-row').forEach(el => {
+                el.classList.remove('highlight-col', 'highlight-row');
+            });
+
+            if (activeCells.length > 0) {
+                matrixTable.classList.add('fortune-active');
+                let theadThs = document.querySelector('thead tr').children;
+                activeCells.forEach(td => {
+                    let tr = td.parentElement;
+                    let colIndex = Array.from(tr.children).indexOf(td);
+
+                    tr.querySelector('th').classList.add('highlight-row');
+                    theadThs[colIndex].classList.add('highlight-col');
+                });
+            } else {
+                matrixTable.classList.remove('fortune-active');
+            }
+        }
+
+        function resetFortune() {
+            document.querySelectorAll('.active-cell').forEach(td => {
+                td.classList.remove('active-cell', 'good-star', 'bad-star');
+            });
+            updateHighlights();
+        }
+    </script>
+</body>
+
+</html>
