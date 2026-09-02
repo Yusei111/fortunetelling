@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>10天体 × 12星座 占いブース専用ダッシュボード</title>
     <style>
         body {
@@ -13,6 +13,9 @@
             margin: 0;
             padding: 0;
             height: 100vh;
+            /* Fallback for older browsers */
+            height: 100dvh;
+            /* スマホのブラウザバー対策 */
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -71,13 +74,14 @@
             gap: 10px;
             overflow: hidden;
             transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
-            max-height: 150px;
+            max-height: 250px;
             opacity: 1;
             margin-top: 15px;
+            width: 100%;
         }
 
         .control-panel.collapsed {
-            max-height: 0;
+            max-height: 0 !important;
             opacity: 0;
             margin-top: 0;
             pointer-events: none;
@@ -121,6 +125,8 @@
             padding: 8px 20px;
             border-radius: 30px;
             border: 1px solid #334155;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .controls button {
@@ -149,6 +155,8 @@
             overflow: auto;
             position: relative;
             padding: 20px;
+            -webkit-overflow-scrolling: touch;
+            /* スマホの慣性スクロール */
         }
 
         .zoom-container {
@@ -319,6 +327,89 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: #64748b;
+        }
+
+        /* スマートフォン向けレスポンシブデザイン追加 */
+        @media (max-width: 768px) {
+            .header-area {
+                padding: 10px;
+            }
+
+            .header-top {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 1.2em;
+            }
+
+            .toggle-btn {
+                position: relative;
+                right: auto;
+                width: 100%;
+                max-width: 250px;
+                padding: 10px;
+            }
+
+            .control-panel {
+                max-height: 350px;
+            }
+
+            .fortune-controls,
+            .controls {
+                padding: 10px;
+                gap: 8px;
+                border-radius: 15px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .controls span {
+                width: 100%;
+                display: block;
+                text-align: center;
+                margin-bottom: 5px;
+            }
+
+            .controls button,
+            .fortune-controls button {
+                flex: 1 1 calc(50% - 10px);
+                font-size: 0.85em;
+                padding: 12px 5px;
+                /* スマホで押しやすい高さ */
+            }
+
+            .viewport {
+                padding: 10px;
+            }
+
+            td {
+                min-width: 140px;
+                width: 140px;
+                padding: 10px;
+                font-size: 0.85em;
+            }
+
+            th {
+                font-size: 0.95em;
+                padding: 10px;
+            }
+
+            th.row-header,
+            th.top-left {
+                min-width: 100px;
+                font-size: 0.85em;
+            }
+
+            .keyword {
+                font-size: 1em;
+            }
+
+            .planet-desc {
+                font-size: 0.7em;
+            }
         }
     </style>
 </head>
